@@ -5,13 +5,13 @@
 
 Spring AI integration for **Microsoft Foundry Agent Service** (also called Azure AI Agents) using the Conversations / Responses APIs.
 
-> **Naming note:** This project is intentionally **not** called “AgentCore”. *Amazon Bedrock AgentCore* is an AWS service. The Microsoft product name is **Foundry Agent Service** / **Azure AI Agents** (`com.azure:azure-ai-agents`).
+> **Naming note:** This project is intentionally **not** called "AgentCore". *Amazon Bedrock AgentCore* is an AWS service. The Microsoft product name is **Foundry Agent Service** / **Azure AI Agents** (`com.azure:azure-ai-agents`).
 
 | | |
 |---|---|
 | **Repository name** | `spring-ai-azure-agents` |
 | **Short description** | Spring AI `ChatModel` + Boot starter for Microsoft Foundry Agent Service, with local `@Tool` virtualization and conversation-id memory mapping. |
-| **Long description** | Bridges Spring AI’s declarative `ChatClient` / `ChatModel` APIs to Microsoft Foundry Agent Service (`com.azure:azure-ai-agents` Conversations & Responses). Offloads chat history to Foundry conversations, executes Spring tools locally on function calls, and emits Micrometer observations—without using the deprecated classic Threads/Runs Assistants SDK. |
+| **Long description** | Bridges Spring AI's declarative `ChatClient` / `ChatModel` APIs to Microsoft Foundry Agent Service (`com.azure:azure-ai-agents` Conversations & Responses). Offloads chat history to Foundry conversations, executes Spring tools locally on function calls, and emits Micrometer observations, without using the deprecated classic Threads/Runs Assistants SDK. |
 
 ## Modules (Spring AI naming)
 
@@ -35,9 +35,9 @@ org.springframework.ai.model.azure.agents.autoconfigure
 
 ## Architecture
 
-1. **`AzureConversationIdAdvisor`** — maps a session id → Foundry conversation id (server-side memory).
-2. **`AzureAgentsChatModel`** — creates/resolves an agent version, calls `ResponsesClient.createAzureResponse`, executes local `@Tool` / `ToolCallback`s on function calls, submits outputs with `previousResponseId`.
-3. **Micrometer** — observation `azure.agents.response` with agent name + conversation/response ids.
+1. **`AzureConversationIdAdvisor`** - maps a session id to a Foundry conversation id (server-side memory).
+2. **`AzureAgentsChatModel`** - creates/resolves an agent version, calls `ResponsesClient.createAzureResponse`, executes local `@Tool` / `ToolCallback`s on function calls, submits outputs with `previousResponseId`.
+3. **Micrometer** - observation `azure.agents.response` with agent name + conversation/response ids.
 
 ## Quick start
 

@@ -45,7 +45,7 @@ import reactor.core.scheduler.Schedulers;
  * {@link ConversationIdRepository}, creates a remote conversation when needed, and injects
  * the id into {@link AzureAgentsChatOptions} before the {@code ChatModel} runs.
  * <p>
- * Does <strong>not</strong> hijack model execution — unlike classic thread-polling advisors.
+ * Does <strong>not</strong> hijack model execution, unlike classic thread-polling advisors.
  *
  * @author Viquar Khan
  */
