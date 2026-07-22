@@ -197,8 +197,14 @@ class AzureAgentsChatModelTests {
 		ChatResponse chatResponse = this.chatModel.call(new Prompt(new UserMessage("weather?"), options));
 		assertThat(chatResponse.getResult().getOutput().getText()).isEqualTo("Weather is fine");
 		verify(this.toolExecutor, times(1)).execute(anyList(), anyList(), anyMap());
+
+		ArgumentCaptor<ResponseCreateParams.Builder> captor = ArgumentCaptor.forClass(ResponseCreateParams.Builder.class);
 		verify(this.responsesClient, times(2)).createAzureResponse(any(AzureCreateResponseOptions.class),
-				any(ResponseCreateParams.Builder.class));
+				captor.capture());
+		List<ResponseCreateParams.Builder> requests = captor.getAllValues();
+		assertThat(requests.get(0).build().conversation()).isPresent();
+		assertThat(requests.get(1).build().previousResponseId()).hasValue("resp-tool");
+		assertThat(requests.get(1).build().conversation()).isEmpty();
 	}
 
 	@Test

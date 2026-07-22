@@ -137,6 +137,7 @@ public class AzureAgentsChatModel implements ChatModel {
 		AzureCreateResponseOptions azureOptions = new AzureCreateResponseOptions()
 			.setAgentReference(agentReference);
 
+		// Initial request: set conversation and input
 		ResponseCreateParams.Builder params = ResponseCreateParams.builder().input(userText);
 		if (StringUtils.hasText(conversationId)) {
 			params.conversation(conversationId);
@@ -165,12 +166,11 @@ public class AzureAgentsChatModel implements ChatModel {
 			List<ResponseInputItem> toolOutputs = this.toolExecutor.execute(functionCalls, toolCallbacks,
 					options.getToolContext());
 
+			// Follow-up request: use previousResponseId WITHOUT conversation
 			ResponseCreateParams.Builder followUp = ResponseCreateParams.builder()
 				.previousResponseId(response.id())
 				.inputOfResponse(toolOutputs);
-			if (StringUtils.hasText(conversationId)) {
-				followUp.conversation(conversationId);
-			}
+			// Don't set conversation here - previousResponseId maintains the context
 			response = this.responsesClient.createAzureResponse(azureOptions, followUp);
 			round++;
 		}

@@ -17,6 +17,12 @@
 package org.springframework.ai.azure.agents.agent;
 
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import com.azure.ai.agents.AgentsClient;
 import com.azure.ai.agents.models.AgentReference;
@@ -37,6 +43,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -114,6 +121,41 @@ class AzureAgentsReferenceManagerTests {
 		assertThatThrownBy(() -> manager.resolve(null, null, null, List.of()))
 			.isInstanceOf(IllegalStateException.class)
 			.hasMessageContaining("create-on-demand is disabled");
+	}
+
+	@Test
+	void concurrentResolvesCreateOnlyOneAgentVersion() throws Exception {
+		when(this.versionDetails.getName()).thenReturn("my-agent");
+		when(this.versionDetails.getVersion()).thenReturn("created-1");
+
+		CountDownLatch createStarted = new CountDownLatch(1);
+		CountDownLatch releaseCreate = new CountDownLatch(1);
+		doAnswer(invocation -> {
+			createStarted.countDown();
+			assertThat(releaseCreate.await(5, TimeUnit.SECONDS)).isTrue();
+			return this.versionDetails;
+		}).when(this.agentsClient).createAgentVersion(eq("my-agent"), any(PromptAgentDefinition.class));
+
+		AzureAgentsReferenceManager manager = new AzureAgentsReferenceManager(this.agentsClient, this.functionToolFactory,
+				"my-agent", "gpt-4o", "Be helpful", true, List.of(), true, null);
+
+		ToolCallback tool = tool("t1");
+		ExecutorService executor = Executors.newFixedThreadPool(2);
+		try {
+			Callable<AgentReference> task = () -> manager.resolve(null, null, null, List.of(tool));
+			Future<AgentReference> first = executor.submit(task);
+			assertThat(createStarted.await(5, TimeUnit.SECONDS)).isTrue();
+			Future<AgentReference> second = executor.submit(task);
+			releaseCreate.countDown();
+
+			assertThat(first.get(5, TimeUnit.SECONDS).getVersion()).isEqualTo("created-1");
+			assertThat(second.get(5, TimeUnit.SECONDS).getVersion()).isEqualTo("created-1");
+		}
+		finally {
+			executor.shutdownNow();
+		}
+
+		verify(this.agentsClient, times(1)).createAgentVersion(eq("my-agent"), any(PromptAgentDefinition.class));
 	}
 
 	private static ToolCallback tool(String name) {
