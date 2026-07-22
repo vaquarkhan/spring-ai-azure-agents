@@ -1,0 +1,28 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: spring-ai-azure-agents-sample
+  ai:
+    azure:
+      agents:
+        enabled: true
+        endpoint: ${FOUNDRY_PROJECT_ENDPOINT:}
+        model-deployment-name: ${FOUNDRY_MODEL_NAME:gpt-4o}
+        agent-name: spring-ai-sample-agent
+        instructions: >
+          You are a helpful assistant. Use the getWeather tool when the user asks
+          about weather.
+        create-agent-on-demand: true
+        code-interpreter-enabled: false
+        max-tool-rounds: 8
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  observations:
+    annotations:
+      enabled: true

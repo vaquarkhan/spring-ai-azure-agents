@@ -1,0 +1,89 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Local dependency scratch
+tmp-deps/
+
+# Compiled / packaged
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+replay_pid*
+
+# Logs
+*.log
+logs/
+
+# IDE - IntelliJ / Cursor / VS Code
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.code-workspace
+.cursor/
+
+# Eclipse
+.classpath
+.project
+.settings/
+.bin/
+.factorypath
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+.nb-gradle/
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+Desktop.ini
+
+# Spring Boot
+spring-boot-*.log
+application-local.yml
+application-local.properties
+application-secret.yml
+application-secret.properties
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.jks
+credentials.json
+local.settings.json
+
+# Test / coverage
+.jacoco/
+jacoco.exec
+test-output/
+surefire-reports/
+failsafe-reports/
+
+# Misc
+*.swp
+*.swo
+*~
+.cache/
+out/
+build/
