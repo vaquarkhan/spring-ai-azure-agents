@@ -1,45 +1,27 @@
 # spring-ai-azure-agents
 
-**Author:** Viquar Khan and Pete Tian
+Spring AI `ChatModel` and Boot starter for **Microsoft Foundry Agent Service** (Azure AI Agents).
 
+**Authors:** Viquar Khan, Pete Tian
 
-Spring AI integration for **Microsoft Foundry Agent Service** (also called Azure AI Agents) using the Conversations / Responses APIs.
+## Requirements
 
-> **Naming note:** This project is intentionally **not** called "AgentCore". *Amazon Bedrock AgentCore* is an AWS service. The Microsoft product name is **Foundry Agent Service** / **Azure AI Agents** (`com.azure:azure-ai-agents`).
+- JDK 21+
+- Spring Boot 3.5.x
+- Spring AI 1.1.x
+- Azure CLI login or Managed Identity (`DefaultAzureCredential`)
+- Foundry project endpoint and model deployment
 
-| | |
-|---|---|
-| **Repository name** | `spring-ai-azure-agents` |
-| **Short description** | Spring AI `ChatModel` + Boot starter for Microsoft Foundry Agent Service, with local `@Tool` virtualization and conversation-id memory mapping. |
-| **Long description** | Bridges Spring AI's declarative `ChatClient` / `ChatModel` APIs to Microsoft Foundry Agent Service (`com.azure:azure-ai-agents` Conversations & Responses). Offloads chat history to Foundry conversations, executes Spring tools locally on function calls, and emits Micrometer observations, without using the deprecated classic Threads/Runs Assistants SDK. |
+## Modules
 
-## Modules (Spring AI naming)
-
-| Artifact | Role |
-|---|---|
+| Module | Description |
+| --- | --- |
 | `spring-ai-azure-agents` | Core `ChatModel`, advisor, tool bridge |
-| `spring-ai-autoconfigure-model-azure-agents` | Boot auto-configuration |
+| `spring-ai-autoconfigure-model-azure-agents` | Spring Boot auto-configuration |
 | `spring-ai-starter-model-azure-agents` | Starter dependency |
-| `spring-ai-azure-agents-sample` | Sample Web app |
+| `spring-ai-azure-agents-sample` | Sample REST app |
 
-## Packages
-
-```
-org.springframework.ai.azure.agents
-org.springframework.ai.azure.agents.advisor
-org.springframework.ai.azure.agents.agent
-org.springframework.ai.azure.agents.conversation
-org.springframework.ai.azure.agents.tool
-org.springframework.ai.model.azure.agents.autoconfigure
-```
-
-## Architecture
-
-1. **`AzureConversationIdAdvisor`** - maps a session id to a Foundry conversation id (server-side memory).
-2. **`AzureAgentsChatModel`** - creates/resolves an agent version, calls `ResponsesClient.createAzureResponse`, executes local `@Tool` / `ToolCallback`s on function calls, submits outputs with `previousResponseId`.
-3. **Micrometer** - observation `azure.agents.response` with agent name + conversation/response ids.
-
-## Quick start
+## Add the dependency
 
 ```xml
 <dependency>
@@ -49,55 +31,57 @@ org.springframework.ai.model.azure.agents.autoconfigure
 </dependency>
 ```
 
+## Configuration
+
 ```yaml
 spring:
   ai:
     azure:
       agents:
+        enabled: true
         endpoint: ${FOUNDRY_PROJECT_ENDPOINT}
         model-deployment-name: ${FOUNDRY_MODEL_NAME}
         agent-name: my-agent
         instructions: You are a helpful assistant.
+        create-agent-on-demand: true
+        code-interpreter-enabled: false
+        max-tool-rounds: 8
 ```
 
-Authenticate with Azure CLI / Managed Identity (`DefaultAzureCredential`).
+| Property | Description |
+| --- | --- |
+| `spring.ai.azure.agents.endpoint` | Foundry project endpoint (required) |
+| `spring.ai.azure.agents.model-deployment-name` | Model deployment for agent creation |
+| `spring.ai.azure.agents.agent-name` | Agent name |
+| `spring.ai.azure.agents.agent-version` | Existing agent version (skips create) |
+| `spring.ai.azure.agents.instructions` | Default agent instructions |
+| `spring.ai.azure.agents.create-agent-on-demand` | Create agent version when missing |
+| `spring.ai.azure.agents.code-interpreter-enabled` | Attach Code Interpreter |
+| `spring.ai.azure.agents.file-search-vector-store-ids` | File Search vector store ids |
+| `spring.ai.azure.agents.max-tool-rounds` | Max local tool round-trips per turn |
 
-```java
-@RestController
-class ChatController {
-  private final ChatClient chatClient;
-
-  ChatController(ChatClient.Builder builder) {
-    this.chatClient = builder.build();
-  }
-
-  @PostMapping("/chat")
-  String chat(@RequestBody String message) {
-    return chatClient.prompt().user(message).call().content();
-  }
-}
-```
-
-Pass a stable session id so turns share one Foundry conversation:
+## Usage
 
 ```java
 chatClient.prompt()
-  .user(message)
-  .advisors(a -> a.param(AzureAgentsConstants.SESSION_ID, sessionId))
-  .call()
-  .content();
+    .user(message)
+    .tools(weatherTools)
+    .advisors(a -> a.param(AzureAgentsConstants.SESSION_ID, sessionId))
+    .call()
+    .content();
 ```
 
-## Build & test
+Pass a stable `SESSION_ID` so turns reuse the same Foundry conversation.
 
-Requires **JDK 21** (`JAVA_HOME` pointing at JDK 21).
+## Build
 
 ```bash
+# Windows PowerShell: set JAVA_HOME to JDK 21 first
 mvn clean test
 mvn clean install
 ```
 
-Sample:
+## Run the sample
 
 ```bash
 export FOUNDRY_PROJECT_ENDPOINT="https://<resource>.services.ai.azure.com/api/projects/<project>"
@@ -112,29 +96,6 @@ curl -s -X POST http://localhost:8080/api/chat \
   -H "X-Session-Id: demo-1" \
   -d "{\"message\":\"What is the weather in Seattle?\"}"
 ```
-
-## Configuration properties
-
-Prefix: `spring.ai.azure.agents`
-
-| Property | Description |
-|---|---|
-| `endpoint` | Foundry project endpoint (required) |
-| `model-deployment-name` | Model for `createAgentVersion` |
-| `agent-name` | Agent name |
-| `agent-version` | Use existing version (skip create) |
-| `instructions` | Default agent instructions |
-| `create-agent-on-demand` | Create version when missing |
-| `code-interpreter-enabled` | Attach Code Interpreter |
-| `file-search-vector-store-ids` | File Search vector stores |
-| `max-tool-rounds` | Local tool loop limit |
-
-## Requirements
-
-- Java 21+
-- Spring Boot 3.5.x
-- Spring AI 1.1.x
-- `com.azure:azure-ai-agents` 2.2.0+
 
 ## License
 
