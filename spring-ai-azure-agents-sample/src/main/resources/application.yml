@@ -4,6 +4,9 @@ server:
 spring:
   application:
     name: spring-ai-azure-agents-sample
+  jackson:
+    parser:
+      allow-single-quotes: true
   ai:
     azure:
       agents:

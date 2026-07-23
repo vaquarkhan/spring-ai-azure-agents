@@ -63,6 +63,8 @@ public class AzureAgentsReferenceManager {
 
 	private final AtomicReference<CachedAgent> cache = new AtomicReference<>();
 
+	private final Object cacheMonitor = new Object();
+
 	public AzureAgentsReferenceManager(AgentsClient agentsClient, AzureFunctionToolFactory functionToolFactory,
 			String defaultAgentName, String modelDeploymentName, String defaultInstructions,
 			boolean codeInterpreterEnabled, List<String> fileSearchVectorStoreIds, boolean createOnDemand,
@@ -104,26 +106,33 @@ public class AzureAgentsReferenceManager {
 					"No agent version configured and create-on-demand is disabled. Set spring.ai.azure.agents.agent-version or enable create-agent-on-demand.");
 		}
 
-		List<Tool> tools = new ArrayList<>();
-		tools.addAll(AzureNativeToolFactory.fromFlags(this.codeInterpreterEnabled, this.fileSearchVectorStoreIds));
-		if (toolCallbacks != null && !toolCallbacks.isEmpty()) {
-			tools.addAll(this.functionToolFactory.toAzureTools(toolCallbacks));
-		}
+		synchronized (this.cacheMonitor) {
+			cached = this.cache.get();
+			if (cached != null && Objects.equals(cached.fingerprint(), toolFingerprint)) {
+				return cached.reference();
+			}
 
-		PromptAgentDefinition definition = new PromptAgentDefinition(this.modelDeploymentName);
-		if (StringUtils.hasText(resolvedInstructions)) {
-			definition.setInstructions(resolvedInstructions);
-		}
-		if (!tools.isEmpty()) {
-			definition.setTools(tools);
-		}
+			List<Tool> tools = new ArrayList<>();
+			tools.addAll(AzureNativeToolFactory.fromFlags(this.codeInterpreterEnabled, this.fileSearchVectorStoreIds));
+			if (toolCallbacks != null && !toolCallbacks.isEmpty()) {
+				tools.addAll(this.functionToolFactory.toAzureTools(toolCallbacks));
+			}
 
-		logger.info("Creating Foundry agent version name={} model={} tools={}", resolvedName,
-				this.modelDeploymentName, tools.size());
-		AgentVersionDetails details = this.agentsClient.createAgentVersion(resolvedName, definition);
-		AgentReference reference = new AgentReference(details.getName()).setVersion(details.getVersion());
-		this.cache.set(new CachedAgent(toolFingerprint, reference));
-		return reference;
+			PromptAgentDefinition definition = new PromptAgentDefinition(this.modelDeploymentName);
+			if (StringUtils.hasText(resolvedInstructions)) {
+				definition.setInstructions(resolvedInstructions);
+			}
+			if (!tools.isEmpty()) {
+				definition.setTools(tools);
+			}
+
+			logger.info("Creating Foundry agent version name={} model={} tools={}", resolvedName,
+					this.modelDeploymentName, tools.size());
+			AgentVersionDetails details = this.agentsClient.createAgentVersion(resolvedName, definition);
+			AgentReference reference = new AgentReference(details.getName()).setVersion(details.getVersion());
+			this.cache.set(new CachedAgent(toolFingerprint, reference));
+			return reference;
+		}
 	}
 
 	private static String fingerprint(List<ToolCallback> toolCallbacks, String instructions, String agentName) {

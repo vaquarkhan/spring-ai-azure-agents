@@ -25,6 +25,14 @@
                 <role>developer</role>
             </roles>
         </developer>
+        <developer>
+            <id>petetian</id>
+            <name>Pete Tian</name>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+            </roles>
+        </developer>
     </developers>
 
     <modules>
@@ -42,6 +50,10 @@
         <spring-ai.version>1.1.2</spring-ai.version>
         <azure-ai-agents.version>2.2.0</azure-ai-agents.version>
         <azure-identity.version>1.16.1</azure-identity.version>
+        <azure-core.version>1.58.1</azure-core.version>
+        <azure-core-http-netty.version>1.16.5</azure-core-http-netty.version>
+        <azure-json.version>1.5.1</azure-json.version>
+        <azure-xml.version>1.2.1</azure-xml.version>
     </properties>
 
     <dependencyManagement>
@@ -84,6 +96,26 @@
                 <groupId>com.azure</groupId>
                 <artifactId>azure-identity</artifactId>
                 <version>${azure-identity.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.azure</groupId>
+                <artifactId>azure-core</artifactId>
+                <version>${azure-core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.azure</groupId>
+                <artifactId>azure-core-http-netty</artifactId>
+                <version>${azure-core-http-netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.azure</groupId>
+                <artifactId>azure-json</artifactId>
+                <version>${azure-json.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.azure</groupId>
+                <artifactId>azure-xml</artifactId>
+                <version>${azure-xml.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -85,7 +85,7 @@ mvn clean install
 
 ```bash
 export FOUNDRY_PROJECT_ENDPOINT="https://<resource>.services.ai.azure.com/api/projects/<project>"
-export FOUNDRY_MODEL_NAME="gpt-4o"
+export FOUNDRY_MODEL_NAME="gpt-5.1"
 az login
 mvn -pl spring-ai-azure-agents-sample spring-boot:run
 ```
